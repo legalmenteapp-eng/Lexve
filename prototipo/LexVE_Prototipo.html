@@ -1,0 +1,370 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>LexVE Prototipo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:wght@400;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: barra lateral tipo expediente + área de trabajo; tarjetas solo donde separan objetos */
+:root{
+  --bg:#f3f4f7; --panel:#ffffff; --fg:#1b2333; --muted:#5d6678; --line:#dfe2ea;
+  --navy:#14284b; --navy-2:#1f3d6e; --gold:#b0832a; --gold-soft:#f5ecd9;
+  --ok:#1f7a4d; --ok-bg:#e3f3ea; --warn:#9a6200; --warn-bg:#fbf0d9; --bad:#b42318; --bad-bg:#fde7e5; --info:#2453a6; --info-bg:#e5edfb;
+  --side-fg:#d9e2f2; --side-bg:#14284b;
+  --f-display:"Libre Caslon Text", Georgia, "Times New Roman", serif;
+  --f-body:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1420; --panel:#171e2d; --fg:#e6e9f0; --muted:#9aa3b5; --line:#2a3346;
+  --navy:#9fb8e6; --navy-2:#c3d3f2; --gold:#d8ac55; --gold-soft:#3a2f18;
+  --ok:#6fcf9b; --ok-bg:#16301f; --warn:#e9b24a; --warn-bg:#3a2c10; --bad:#f2877c; --bad-bg:#3d1a17; --info:#8fb1ee; --info-bg:#1a2a48;
+  --side-fg:#c4cde0; --side-bg:#0b1322; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1420; --panel:#171e2d; --fg:#e6e9f0; --muted:#9aa3b5; --line:#2a3346;
+  --navy:#9fb8e6; --navy-2:#c3d3f2; --gold:#d8ac55; --gold-soft:#3a2f18;
+  --ok:#6fcf9b; --ok-bg:#16301f; --warn:#e9b24a; --warn-bg:#3a2c10; --bad:#f2877c; --bad-bg:#3d1a17; --info:#8fb1ee; --info-bg:#1a2a48;
+  --side-fg:#c4cde0; --side-bg:#0b1322; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:14px/1.5 var(--f-body);margin:0}
+.app{display:grid;grid-template-columns:232px minmax(0,1fr);min-height:100vh}
+aside{background:var(--side-bg);color:var(--side-fg);padding:22px 16px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;gap:18px}
+.logo{font-family:var(--f-display);font-size:26px;color:#fff;letter-spacing:.5px}
+.logo b{color:var(--gold);font-weight:700}
+.despacho{font-size:12px;opacity:.75;margin-top:-12px}
+nav{display:flex;flex-direction:column;gap:2px}
+nav button{all:unset;cursor:pointer;padding:8px 10px;border-radius:7px;font-size:14px;color:var(--side-fg)}
+nav button:hover{background:rgba(255,255,255,.07)}
+nav button[aria-current="true"]{background:rgba(255,255,255,.13);color:#fff;font-weight:600;box-shadow:inset 3px 0 0 var(--gold)}
+nav button:focus-visible{outline:2px solid var(--gold)}
+.usuario{margin-top:auto;font-size:12px;border-top:1px solid rgba(255,255,255,.12);padding-top:12px}
+.usuario strong{display:block;color:#fff;font-size:13px}
+main{padding-block:28px 48px;padding-inline:32px;min-width:0}
+.aviso{background:var(--gold-soft);color:var(--fg);border:1px solid color-mix(in srgb,var(--gold) 40%,transparent);border-radius:8px;padding:8px 12px;font-size:12.5px;margin-bottom:20px}
+h1{font-family:var(--f-display);font-weight:400;font-size:28px;margin:0 0 4px;text-wrap:balance;color:var(--fg)}
+h2{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 12px;font-weight:600}
+.sub{color:var(--muted);margin:0 0 22px}
+.grid{display:grid;gap:16px}
+.kpis{grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:22px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.kpi .t{font-size:12px;color:var(--muted)}
+.kpi .v{font-family:var(--f-display);font-size:26px;margin-top:2px;font-variant-numeric:tabular-nums}
+.kpi .d{font-size:12px;color:var(--muted)}
+.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px;min-width:0}
+.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{text-align:left;font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600;border-bottom:1px solid var(--line);padding:8px 10px}
+td{border-bottom:1px solid var(--line);padding:10px;vertical-align:top}
+tr.click{cursor:pointer} tr.click:hover td{background:color-mix(in srgb,var(--navy) 5%,transparent)}
+.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.mono{font-family:var(--f-mono);font-size:12.5px}
+.small{font-size:12px;color:var(--muted)}
+.chip{display:inline-block;border-radius:999px;padding:1px 9px;font-size:11.5px;font-weight:500;white-space:nowrap}
+.c-info{background:var(--info-bg);color:var(--info)} .c-ok{background:var(--ok-bg);color:var(--ok)}
+.c-warn{background:var(--warn-bg);color:var(--warn)} .c-bad{background:var(--bad-bg);color:var(--bad)}
+.c-neutral{background:color-mix(in srgb,var(--muted) 15%,transparent);color:var(--muted)}
+.c-gold{background:var(--gold-soft);color:var(--gold)}
+.c-urg{background:var(--bad);color:#fff}
+ul.lista{list-style:none;margin:0;padding:0}
+ul.lista li{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+ul.lista li:last-child{border-bottom:0}
+.link{all:unset;cursor:pointer;color:var(--navy-2);font-weight:500}
+.link:hover{text-decoration:underline}
+.link:focus-visible,.btn:focus-visible,.tab:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.btn{all:unset;cursor:pointer;background:var(--navy);color:var(--bg);padding:8px 14px;border-radius:8px;font-weight:500;font-size:13.5px;display:inline-flex;gap:6px;align-items:center}
+.btn.sec{background:transparent;color:var(--fg);border:1px solid var(--line)}
+.btn:hover{filter:brightness(1.1)}
+.barra{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}
+input,select,textarea{font:inherit;color:var(--fg);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 10px;min-width:0}
+input:focus,select:focus,textarea:focus{outline:2px solid color-mix(in srgb,var(--gold) 60%,transparent);border-color:var(--gold)}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-bottom:18px;overflow-x:auto}
+.tab{all:unset;cursor:pointer;padding:9px 12px;font-size:13.5px;color:var(--muted);border-bottom:2px solid transparent;white-space:nowrap}
+.tab[aria-selected="true"]{color:var(--fg);border-color:var(--gold);font-weight:600}
+.cab{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:4px}
+.cab .codigo{font-family:var(--f-mono);font-size:15px;color:var(--muted)}
+dl.datos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 22px;margin:0}
+dl.datos dt{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+dl.datos dd{margin:0}
+ol.tl{list-style:none;margin:0;padding:0 0 0 18px;border-left:2px solid var(--line)}
+ol.tl li{position:relative;padding:0 0 18px 14px}
+ol.tl li::before{content:"";position:absolute;left:-25px;top:6px;width:10px;height:10px;border-radius:50%;background:var(--panel);border:2px solid var(--gold)}
+.prosa p{margin:.5em 0}
+.ia{border-left:3px solid var(--gold);background:color-mix(in srgb,var(--gold-soft) 55%,var(--panel))}
+.factura{max-width:720px}
+.factura header{display:flex;justify-content:space-between;gap:16px;border-bottom:2px solid var(--fg);padding-bottom:12px;margin-bottom:16px;flex-wrap:wrap}
+.tot{margin-left:auto;width:min(100%,300px);display:grid;gap:4px;margin-top:14px;font-variant-numeric:tabular-nums}
+.tot div{display:flex;justify-content:space-between}
+.tot .g{border-top:1px solid var(--line);padding-top:6px;font-weight:600;font-size:15px}
+.meter{height:7px;border-radius:4px;background:var(--line)}
+.meter span{display:block;height:100%;border-radius:4px;background:var(--navy-2)}
+.fila3{display:grid;grid-template-columns:11rem minmax(0,1fr) 2.5rem;gap:10px;align-items:center;padding:5px 0}
+.side{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:16px}
+.form{display:grid;gap:10px}
+.toast{position:fixed;bottom:calc(18px + env(safe-area-inset-bottom,0px));right:18px;background:var(--fg);color:var(--bg);padding:10px 14px;border-radius:8px;font-size:13px;box-shadow:0 6px 20px rgba(0,0,0,.2)}
+@media (max-width:900px){
+  .app{grid-template-columns:1fr}
+  aside{position:static;height:auto;flex-direction:row;flex-wrap:wrap;align-items:center;padding:12px 16px}
+  .despacho,.usuario{display:none}
+  nav{flex-direction:row;overflow-x:auto;width:100%}
+  nav button{white-space:nowrap}
+  main{padding-inline:16px}
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .two,.side{grid-template-columns:1fr}
+  dl.datos{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:no-preference){.vista{animation:ent .18s ease-out}@keyframes ent{from{opacity:.4;transform:translateY(3px)}}}
+</style>
+
+<div class="app">
+  <aside>
+    <div class="logo">Lex<b>VE</b></div>
+    <div class="despacho">Rodríguez, Pérez &amp; Asociados (demo)</div>
+    <nav id="nav"></nav>
+    <div class="usuario"><strong>María Fernanda Rodríguez</strong>Socia · Inpre. 45.210</div>
+  </aside>
+  <main>
+    <div class="aviso">Prototipo con los datos de prueba cargados en Supabase (ficticios). Fecha de referencia: 4 oct 2026. La IA y el envío de correos se simulan aquí; en la app real llaman a Claude y a Resend.</div>
+    <div id="vista" class="vista"></div>
+  </main>
+</div>
+<div id="toast" class="toast" hidden></div>
+
+<script>
+const HOY = new Date("2026-10-04T08:00:00-04:00");
+const D = {
+casos:[
+{c:"LEX-2025-001",exp:"AP11-V-2025-000312",t:"Cobro de bolívares por vía de intimación contra Comercial Tamanaco",m:"civil",e:"en_tramite",et:"Contestación de la demanda",trib:"Juzgado Quinto de Primera Instancia en lo Civil, Mercantil, Tránsito y Bancario",circ:"Área Metropolitana de Caracas",cp:"Comercial Tamanaco, C.A.",d:"Cobro de facturas aceptadas por USD 85.000 por suministro de mobiliario. Se decretó medida preventiva de embargo.",cu:85000,p:1,ini:"2026-02-06",cl:"Inversiones Ávila 2020, C.A.",ab:["María Fernanda Rodríguez|Responsable","Carlos Eduardo Pérez|Colaborador","Luisa Contreras|Pasante"],h:35,pf:2415,tar:"Por hora"},
+{c:"LEX-2025-003",exp:"LP21-L-2025-000145",t:"Demanda por prestaciones sociales — ex gerente de ventas",m:"laboral",e:"en_tramite",et:"Audiencia preliminar",trib:"Tribunal Primero de Primera Instancia de Sustanciación, Mediación y Ejecución del Trabajo",circ:"Estado Mérida",cp:"Jesús Alberto Rangel",d:"Ex trabajador reclama prestaciones sociales, utilidades y vacaciones fraccionadas conforme a la LOTTT, más indemnización por despido.",cu:42000,p:1,ini:"2026-05-07",cl:"Distribuidora Los Andes, S.A.",ab:["Andreína Márquez|Responsable","José Gregorio Salazar|Colaborador"],h:29,pf:1987.5,tar:"Por hora"},
+{c:"LEX-2025-004",exp:"AP11-V-2024-000987",t:"Acción reivindicatoria de inmueble en El Paraíso",m:"civil",e:"en_sentencia",et:"Informes / sentencia",trib:"Juzgado Tercero de Primera Instancia en lo Civil, Mercantil, Tránsito y Bancario",circ:"Área Metropolitana de Caracas",cp:"Inquilinos ocupantes",d:"Reivindicación de apartamento ocupado sin título. Fase de informes concluida; se espera sentencia.",cu:120000,p:1,ini:"2025-08-10",cl:"Pedro José Hernández",ab:["María Fernanda Rodríguez|Responsable","Andreína Márquez|Colaborador"],h:19,pf:2062.5,tar:"Fija · USD 3.500"},
+{c:"LEX-2025-006",exp:"FP11-V-2025-000078",t:"Resolución de contrato de obra y daños y perjuicios",m:"mercantil",e:"apelacion",et:"Apelación",trib:"Juzgado Superior en lo Civil, Mercantil y del Tránsito",circ:"Estado Bolívar",cp:"Desarrollos Caroní, C.A.",d:"Sentencia de primera instancia parcialmente desfavorable. Se ejerció apelación; pendiente fijación de informes en alzada.",cu:310000,p:1,ini:"2025-12-08",cl:"Constructora Orinoco 3000, C.A.",ab:["María Fernanda Rodríguez|Responsable","José Gregorio Salazar|Colaborador","Carlos Eduardo Pérez|Colaborador"],h:38,pf:3525,tar:"Cuota litis · 15 %"},
+{c:"LEX-2026-005",exp:"AP51-V-2026-000221",t:"Divorcio contencioso y régimen de convivencia familiar",m:"lopnna",e:"en_tramite",et:"Fase de mediación",trib:"Tribunal de Protección de Niños, Niñas y Adolescentes",circ:"Área Metropolitana de Caracas",cp:"Gustavo Rivas",d:"Divorcio con causal de ruptura prolongada de la vida en común (art. 185-A CC) y fijación de obligación de manutención para dos hijos.",cu:null,p:1,ini:"2026-07-01",cl:"Ana Lucía Gómez de Rivas",ab:["Andreína Márquez|Responsable","María Fernanda Rodríguez|Consultor"],h:17,pf:2062.5,tar:"Fija · USD 2.500"},
+{c:"LEX-2026-007",exp:"AP01-P-2026-000456",t:"Defensa penal — presunta estafa (art. 462 Código Penal)",m:"penal",e:"en_tramite",et:"Fase preparatoria",trib:"Tribunal Décimo de Primera Instancia en Funciones de Control",circ:"Área Metropolitana de Caracas",cp:"Ministerio Público",d:"Imputación por estafa. Medida cautelar sustitutiva de presentación periódica. Preparar escrito de descargos y promoción de diligencias de investigación.",cu:null,p:1,ini:"2026-08-05",cl:"Luis Alberto Moreno",ab:["José Gregorio Salazar|Responsable","María Fernanda Rodríguez|Consultor"],h:22,pf:2425,tar:"Fija · USD 5.000"},
+{c:"LEX-2026-008",exp:"—",t:"Recurso jerárquico contra resolución de sumario administrativo SENIAT",m:"tributario",e:"abierto",et:"Vía administrativa",trib:"SENIAT — Gerencia Regional de Tributos Internos Región Central",circ:"Estado Carabobo",cp:"SENIAT",d:"Reparo por IVA y multa por incumplimiento de deberes formales. Plazo de 25 días hábiles para el recurso jerárquico (COT).",cu:18500,p:1,ini:"2026-09-22",cl:"Farmacia Santa Rosa, C.A.",ab:["Carlos Eduardo Pérez|Responsable","Andreína Márquez|Colaborador"],h:19,pf:1245,tar:"Fija · USD 2.800"},
+{c:"LEX-2026-010",exp:"JP41-G-2026-000033",t:"Recurso contencioso administrativo agrario contra acto del INTi",m:"agrario",e:"en_tramite",et:"Admisión",trib:"Juzgado Superior Agrario",circ:"Estado Guárico",cp:"Instituto Nacional de Tierras (INTi)",d:"Nulidad de acto de rescate de tierras sobre fundo productivo. Solicitud de medida cautelar de protección a la producción agroalimentaria.",cu:null,p:1,ini:"2026-08-25",cl:"Agropecuaria El Samán, C.A.",ab:["Carlos Eduardo Pérez|Responsable","María Fernanda Rodríguez|Consultor"],h:23.5,pf:2625,tar:"Por hora"},
+{c:"LEX-2025-009",exp:"VP31-S-2025-000321",t:"Partición de herencia — sucesión Villalobos",m:"civil",e:"ejecucion",et:"Ejecución de partición",trib:"Juzgado Segundo de Primera Instancia en lo Civil, Mercantil y del Tránsito",circ:"Estado Zulia",cp:"Coherederos",d:"Partición de bienes hereditarios: dos inmuebles y cuentas bancarias. Designado partidor.",cu:95000,p:2,ini:"2025-05-22",cl:"Carmen Elena Villalobos",ab:["José Gregorio Salazar|Responsable"],h:10.5,pf:200,tar:"Por hora"},
+{c:"LEX-2026-011",exp:"KP02-L-2026-000098",t:"Calificación de despido y reenganche",m:"laboral",e:"abierto",et:"Introducción de demanda",trib:"Tribunal de Sustanciación, Mediación y Ejecución del Trabajo",circ:"Estado Lara",cp:"Industrias Demo Lara, C.A.",d:"Trabajador amparado por inamovilidad laboral. Despido sin calificación previa ante la Inspectoría.",cu:null,p:2,ini:"2026-09-26",cl:"Rafael Antonio Guzmán",ab:["Andreína Márquez|Responsable","José Gregorio Salazar|Colaborador"],h:26.5,pf:1797.5,tar:"Cuota litis · 20 %"},
+{c:"LEX-2026-002",exp:"—",t:"Revisión de contrato de arrendamiento comercial",m:"mercantil",e:"abierto",et:"Asesoría",trib:"—",circ:"—",cp:"Centro Comercial Demo",d:"Revisión de cláusulas de canon en divisas y ajuste conforme al Decreto-Ley de Arrendamientos Inmobiliarios para Uso Comercial.",cu:null,p:3,ini:"2026-09-14",cl:"Inversiones Ávila 2020, C.A.",ab:["Carlos Eduardo Pérez|Responsable"],h:8,pf:630,tar:"Iguala · USD 800/mes"},
+{c:"LEX-2024-012",exp:"AP11-M-2024-000045",t:"Ejecución de hipoteca — Inmobiliaria Demo",m:"mercantil",e:"cerrado",et:"Terminado por transacción",trib:"Juzgado Octavo de Primera Instancia en lo Civil, Mercantil, Tránsito y Bancario",circ:"Área Metropolitana de Caracas",cp:"Inmobiliaria Demo, C.A.",d:"Transacción homologada; pago total recibido.",cu:60000,p:3,ini:"2024-11-03",cl:"Inversiones Ávila 2020, C.A.",ab:["María Fernanda Rodríguez|Responsable"],h:0,pf:0,tar:"Por hora"}
+],
+plazos:[
+["LEX-2026-011","Caducidad de la acción de reenganche (30 días)","prescripcion","2026-10-04",0,"¡Crítico! Introducir antes del vencimiento","Andreína Márquez"],
+["LEX-2026-005","Audiencia de sustanciación","audiencia","2026-10-05",0,"","Andreína Márquez"],
+["LEX-2025-001","Lapso de promoción de pruebas","lapso_procesal","2026-10-06",0,"15 días de despacho (art. 396 CPC)","Carlos Eduardo Pérez"],
+["LEX-2025-006","Presentación de informes en alzada","lapso_procesal","2026-10-07",0,"Día 20 de despacho tras recibo del expediente","Carlos Eduardo Pérez"],
+["LEX-2026-007","Presentación periódica del imputado","reunion","2026-10-08",0,"Recordar al cliente","José Gregorio Salazar"],
+["LEX-2025-003","Audiencia de juicio","audiencia","2026-10-09",0,"Tribunal de Juicio del Trabajo — Mérida","Andreína Márquez"],
+["LEX-2026-008","Vencimiento recurso jerárquico (25 días hábiles COT)","vencimiento_recurso","2026-10-10",0,"Consignar ante la Gerencia Regional","Carlos Eduardo Pérez"],
+["LEX-2025-001","Oposición a las pruebas de la contraparte","lapso_procesal","2026-10-13",0,"","Carlos Eduardo Pérez"],
+["LEX-2025-004","Plazo para dictar sentencia (60 días)","lapso_procesal","2026-10-16",0,"Vigilar diferimiento; preparar eventual apelación","María Fernanda Rodríguez"],
+["LEX-2026-010","Audiencia oral agraria","audiencia","2026-10-18",0,"","Carlos Eduardo Pérez"],
+["LEX-2025-009","Consignación de informe del partidor","lapso_procesal","2026-10-24",0,"","José Gregorio Salazar"],
+["LEX-2026-007","Fin de fase preparatoria (estimado)","lapso_procesal","2026-12-03",0,"","José Gregorio Salazar"],
+["LEX-2025-001","Contestación","lapso_procesal","2026-07-06",1,"","Carlos Eduardo Pérez"],
+["LEX-2025-003","Consignación escrito de pruebas","lapso_procesal","2026-06-15",1,"","Andreína Márquez"]
+],
+act:[
+["LEX-2026-011","2026-09-27","Reunión con cliente","Entrevista inicial con el trabajador","Se recabaron recibos de pago y carta de despido.","Andreína Márquez"],
+["LEX-2026-008","2026-09-24","Notificación","Notificación de resolución culminatoria de sumario","","Carlos Eduardo Pérez"],
+["LEX-2026-007","2026-09-24","Escrito","Solicitud de diligencias de investigación al MP","","José Gregorio Salazar"],
+["LEX-2025-001","2026-09-19","Reunión con cliente","Reunión con gerente legal del cliente","Se revisó estrategia de promoción de pruebas.","María Fernanda Rodríguez"],
+["LEX-2025-006","2026-09-14","Auto","Oída la apelación en ambos efectos","","José Gregorio Salazar"],
+["LEX-2026-005","2026-09-04","Audiencia","Audiencia de mediación","Se acordó régimen de convivencia provisional.","Andreína Márquez"],
+["LEX-2024-012","2026-08-30","Auto","Homologación de transacción","","María Fernanda Rodríguez"],
+["LEX-2026-010","2026-08-27","Escrito","Recurso de nulidad con solicitud de medida cautelar","","Carlos Eduardo Pérez"],
+["LEX-2025-003","2026-08-20","Audiencia","Audiencia preliminar — prolongación","Sin acuerdo. Propuesta de pago de USD 18.000 rechazada.","José Gregorio Salazar"],
+["LEX-2025-006","2026-08-10","Diligencia","Apelación ejercida","","Carlos Eduardo Pérez"],
+["LEX-2026-007","2026-08-07","Audiencia","Audiencia de presentación","Medida cautelar sustitutiva de presentación cada 30 días.","José Gregorio Salazar"],
+["LEX-2025-009","2026-08-05","Auto","Designación de partidor","","José Gregorio Salazar"],
+["LEX-2025-006","2026-08-05","Sentencia","Sentencia de primera instancia","Parcialmente con lugar: resuelve el contrato pero niega daños emergentes.","María Fernanda Rodríguez"],
+["LEX-2026-005","2026-07-06","Escrito","Solicitud de divorcio","","Andreína Márquez"],
+["LEX-2025-004","2026-07-06","Escrito","Consignación de informes","","María Fernanda Rodríguez"],
+["LEX-2025-001","2026-06-26","Escrito","Oposición al decreto de intimación (contraparte)","La parte intimada formuló oposición; el procedimiento continúa por vía ordinaria.","Carlos Eduardo Pérez"],
+["LEX-2025-003","2026-06-16","Audiencia","Audiencia preliminar — primera sesión","Se consignaron escritos de promoción de pruebas. Prolongada.","Andreína Márquez"],
+["LEX-2025-001","2026-06-06","Citación","Intimación practicada por el alguacil","","Luisa Contreras"],
+["LEX-2025-003","2026-05-09","Citación","Notificación de la demandada","","Andreína Márquez"],
+["LEX-2025-001","2026-03-18","Auto","Decreto de medida preventiva de embargo","Embargo sobre bienes muebles hasta por el doble de lo demandado.","Carlos Eduardo Pérez"],
+["LEX-2025-001","2026-02-21","Auto","Admisión de la demanda y decreto de intimación","","Carlos Eduardo Pérez"],
+["LEX-2025-001","2026-02-08","Escrito","Introducción de libelo de demanda","Demanda por intimación con facturas aceptadas anexas.","María Fernanda Rodríguez"],
+["LEX-2025-004","2025-12-08","Prueba","Promoción de pruebas — documento de propiedad registrado","","Andreína Márquez"],
+["LEX-2025-004","2025-08-20","Escrito","Libelo de acción reivindicatoria","","María Fernanda Rodríguez"],
+["LEX-2025-009","2025-06-11","Escrito","Demanda de partición","","José Gregorio Salazar"]
+],
+docs:[
+["LEX-2025-001","Libelo de demanda — intimación.pdf","Demanda","Drive"],
+["LEX-2025-001","Escrito de oposición — contraparte.pdf","Escrito","Drive"],
+["LEX-2025-003","Libelo laboral — Rangel.pdf","Demanda","Drive"],
+["LEX-2025-006","Sentencia primera instancia — Orinoco.pdf","Sentencia","Drive"],
+["LEX-2026-008","Resolución culminatoria de sumario SENIAT.pdf","Acto administrativo","Drive"],
+["LEX-2026-011","Carta de despido — Guzmán.jpg","Prueba","Drive"]
+],
+fact:[
+["F-000109","Farmacia Santa Rosa, C.A.","LEX-2026-008","2026-10-03","2026-10-18","borrador",1400,224,0,1624,0,192,[["Honorarios recurso jerárquico (50%)",1,1400]]],
+["F-000108","Inversiones Ávila 2020, C.A.","LEX-2025-001","2026-08-30","2026-09-14","vencida",1800,288,0,2088,0,185.2,[["Horas profesionales — socia",6,150],["Horas profesionales — abogado",10,90]]],
+["F-000107","Carmen Elena Villalobos","LEX-2025-009","2026-09-24","2026-10-09","emitida",1120,179.2,0,1299.2,0,190.7,[["Horas profesionales — partición",14,80]]],
+["F-000106","Inversiones Ávila 2020, C.A.","LEX-2026-002","2026-09-04","2026-09-19","pagada",800,128,0,928,928,186,[["Iguala mensual — asesoría corporativa",1,800]]],
+["F-000105","Luis Alberto Moreno","LEX-2026-007","2026-08-10","2026-08-25","pagada",2500,400,87,2987,2987,182.3,[["Anticipo honorarios defensa penal",1,2500]]],
+["F-000104","Ana Lucía Gómez de Rivas","LEX-2026-005","2026-08-05","2026-08-20","parcial",1250,200,0,1450,725,181,[["Honorarios fijos — divorcio (50%)",1,1250]]],
+["F-000103","Pedro José Hernández","LEX-2025-004","2026-07-26","2026-08-10","pagada",1750,280,0,2030,2030,179.4,[["Honorarios fijos — cuota 1 de 2",1,1750]]],
+["F-000102","Distribuidora Los Andes, S.A.","LEX-2025-003","2026-07-16","2026-07-31","pagada",1200,192,0,1392,1392,178.1,[["Horas profesionales — audiencia preliminar",16,75]]],
+["F-000101","Inversiones Ávila 2020, C.A.","LEX-2025-001","2026-07-01","2026-07-16","pagada",3870,619.2,134.68,4623.88,4623.88,175.5,[["Horas profesionales — socia",12,150],["Horas profesionales — abogado",18,90],["Gastos de traslado y depositario",1,450]]]
+],
+horas:[["María Fernanda Rodríguez","Socia",62,62,9300],["José Gregorio Salazar","Abogado",66,61.5,4920],["Carlos Eduardo Pérez","Abogado",53.5,43,3870],["Andreína Márquez","Abogada",54,43,3225],["Luisa Contreras","Asistente",12,12,300]],
+clientes:[
+["Inversiones Ávila 2020, C.A.","Jurídica","J-41234567-8","legal@avila2020.demo","Caracas",3,1],
+["Distribuidora Los Andes, S.A.","Jurídica","J-30987654-1","gerencia@losandes.demo","Mérida",1,0],
+["Pedro José Hernández","Natural","V-8.765.432","pedroh@correo.demo","Caracas",1,1],
+["Ana Lucía Gómez de Rivas","Natural","V-13.456.789","analucia@correo.demo","Caracas",1,0],
+["Constructora Orinoco 3000, C.A.","Jurídica","J-29876543-0","obras@orinoco3000.demo","Ciudad Guayana",1,1],
+["Luis Alberto Moreno","Natural","V-11.222.333","lamoreno@correo.demo","Caracas",1,0],
+["Farmacia Santa Rosa, C.A.","Jurídica","J-31122334-5","admin@santarosa.demo","Valencia",1,0],
+["Carmen Elena Villalobos","Natural","V-6.543.210","carmenv@correo.demo","Maracaibo",1,0],
+["Agropecuaria El Samán, C.A.","Jurídica","J-40555666-2","info@elsaman.demo","San Juan de los Morros",1,0],
+["Rafael Antonio Guzmán","Natural","V-19.876.543","rguzman@correo.demo","Barquisimeto",1,0]
+],
+sent:[
+["Sala Constitucional","EJEMPLO-001","Amparo constitucional — requisitos de admisibilidad","El amparo es una vía extraordinaria que procede cuando no existen vías ordinarias idóneas para restablecer la situación jurídica infringida.",""],
+["Sala de Casación Civil","EJEMPLO-002","Procedimiento por intimación — facturas aceptadas","La factura aceptada constituye prueba escrita suficiente para el procedimiento intimatorio y para decretar medidas preventivas.","LEX-2025-001"],
+["Sala de Casación Social","EJEMPLO-003","Carga de la prueba en materia laboral — salario y bonos","Cuando el patrono admite la relación laboral, le corresponde la carga de desvirtuar los conceptos y montos salariales alegados por el trabajador.","LEX-2025-003"],
+["Sala Político-Administrativa","EJEMPLO-004","Suspensión de efectos de actos tributarios","La suspensión de efectos procede cuando se acredita el fumus boni iuris y el periculum in mora conforme al COT.","LEX-2026-008"],
+["Sala de Casación Civil","EJEMPLO-005","Daños y perjuicios — necesidad de prueba de la cuantía","La procedencia de daños materiales exige la demostración de su existencia y cuantía; la experticia complementaria procede solo si se probó el daño.","LEX-2025-006"]
+]
+};
+const IA_MUESTRA = `<p><strong>Resumen:</strong> Cobro por intimación de USD 85.000 con facturas aceptadas; la contraparte se opuso alegando falta de facultad del firmante, entrega incompleta y compensación.</p>
+<p><strong>Fortalezas:</strong> facturas aceptadas (prueba escrita, art. 644 CPC); medida de embargo decretada.</p>
+<p><strong>Riesgos:</strong> demostrar la representación de quien aceptó las facturas; la compensación alegada (USD 12.000) podría reducir la condena.</p>
+<p><strong>Próximos pasos:</strong> promover prueba de informes a la contraparte sobre su registro de proveedores, testimoniales del personal que recibió el mobiliario y exhibición de la orden de compra.</p>`;
+
+const MAT={civil:"Civil",mercantil:"Mercantil",penal:"Penal",laboral:"Laboral",lopnna:"Protección NNA",tributario:"Tributario",agrario:"Agrario"};
+const EST={abierto:["Abierto","c-info"],en_tramite:["En trámite","c-info"],en_sentencia:["Espera de sentencia","c-warn"],apelacion:["Apelación","c-warn"],ejecucion:["Ejecución","c-gold"],cerrado:["Cerrado","c-ok"],borrador:["Borrador","c-neutral"],emitida:["Emitida","c-info"],pagada:["Pagada","c-ok"],parcial:["Pago parcial","c-warn"],vencida:["Vencida","c-bad"]};
+const TP={lapso_procesal:"Lapso procesal",audiencia:"Audiencia",vencimiento_recurso:"Vencimiento de recurso",prescripcion:"Caducidad",reunion:"Reunión"};
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const usd=n=>"USD "+Number(n).toLocaleString("es-VE",{minimumFractionDigits:2,maximumFractionDigits:2});
+const bs=n=>"Bs. "+Number(n).toLocaleString("es-VE",{minimumFractionDigits:2,maximumFractionDigits:2});
+const fe=s=>new Date(s+"T12:00:00").toLocaleDateString("es-VE",{day:"2-digit",month:"short",year:"numeric"});
+const dias=s=>Math.round((new Date(s+"T09:00:00-04:00")-HOY)/864e5);
+const chipDias=d=>{const c=d<0?"c-urg":d<=1?"c-bad":d<=3?"c-warn":"c-neutral";const t=d<0?`vencido ${-d} d`:d===0?"hoy":d===1?"mañana":`${d} días`;return `<span class="chip ${c}">${t}</span>`};
+const chipE=e=>`<span class="chip ${EST[e]?.[1]||"c-neutral"}">${EST[e]?.[0]||e}</span>`;
+const prio=p=>`<span class="chip ${p===1?"c-bad":p===2?"c-warn":"c-neutral"}">${["","Alta","Media","Baja"][p]}</span>`;
+const caso=c=>D.casos.find(x=>x.c===c);
+const proxPlazo=c=>D.plazos.filter(p=>p[0]===c&&!p[4]).sort((a,b)=>a[3]<b[3]?-1:1)[0];
+function toast(t){const el=$("#toast");el.textContent=t;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,3200)}
+
+const VISTAS=[["panel","Panel"],["casos","Casos"],["clientes","Clientes"],["tsj","Jurisprudencia TSJ"],["facturacion","Facturación"],["informes","Informes"],["alertas","Alertas"]];
+let estado={v:"panel",caso:null,tab:"resumen",fact:null,q:"",mat:""};
+function ir(v,extra={}){estado={...estado,v,...extra};render();window.scrollTo(0,0)}
+function navegar(){ $("#nav").innerHTML=VISTAS.map(([k,t])=>`<button data-v="${k}" aria-current="${estado.v===k||(k==="casos"&&estado.v==="caso")||(k==="facturacion"&&estado.v==="factura")}">${t}</button>`).join("") }
+$("#nav").addEventListener("click",e=>{const b=e.target.closest("button");if(b)ir(b.dataset.v)});
+document.addEventListener("click",e=>{const t=e.target.closest("[data-caso]");if(t){ir("caso",{caso:t.dataset.caso,tab:t.dataset.tab||"resumen"});return}
+ const f=e.target.closest("[data-fact]");if(f){ir("factura",{fact:f.dataset.fact});return}
+ const tb=e.target.closest("[data-tab]");if(tb&&estado.v==="caso"){estado.tab=tb.dataset.tab;render()}});
+
+function panel(){
+  const activos=D.casos.filter(c=>c.e!=="cerrado");
+  const prox=D.plazos.filter(p=>!p[4]&&dias(p[3])<=14);
+  const porCobrar=D.fact.filter(f=>!["borrador","pagada"].includes(f[5])).reduce((s,f)=>s+f[9]-f[10],0);
+  const pf=activos.reduce((s,c)=>s+c.pf,0);
+  return `<h1>Buen día, María Fernanda</h1><p class="sub">Domingo 4 de octubre de 2026 · ${prox.length} plazos en las próximas dos semanas</p>
+  <div class="grid kpis">
+   <div class="kpi"><div class="t">Casos activos</div><div class="v">${activos.length}</div><div class="d">${activos.filter(c=>c.p===1).length} de prioridad alta</div></div>
+   <div class="kpi"><div class="t">Plazos 14 días</div><div class="v">${prox.length}</div><div class="d">${prox.filter(p=>dias(p[3])<=1).length} vencen hoy o mañana</div></div>
+   <div class="kpi"><div class="t">Por cobrar</div><div class="v">${usd(porCobrar).replace("USD ","$")}</div><div class="d">1 factura vencida</div></div>
+   <div class="kpi"><div class="t">Trabajo sin facturar</div><div class="v">${usd(pf).replace("USD ","$")}</div><div class="d">Horas y gastos pendientes</div></div>
+  </div>
+  <div class="grid two">
+   <section class="card"><h2>Próximos plazos y audiencias</h2><ul class="lista">${prox.map(p=>`<li><div><button class="link" data-caso="${p[0]}" data-tab="plazos">${esc(p[1])}</button><div class="small"><span class="mono">${p[0]}</span> · ${TP[p[2]]} · ${fe(p[3])} · ${p[6]}</div></div>${chipDias(dias(p[3]))}</li>`).join("")}</ul></section>
+   <section class="card"><h2>Actividad reciente</h2><ul class="lista">${D.act.slice(0,8).map(a=>`<li><div><button class="link" data-caso="${a[0]}" data-tab="seguimiento">${esc(a[3])}</button><div class="small">${a[2]} · <span class="mono">${a[0]}</span> · ${fe(a[1])} · ${a[5]}</div></div></li>`).join("")}</ul></section>
+  </div>`;
+}
+function casos(){
+  let l=D.casos.filter(c=>c.e!=="cerrado"||estado.mat==="todos");
+  if(estado.q){const q=estado.q.toLowerCase();l=l.filter(c=>(c.c+c.t+c.exp+c.cl).toLowerCase().includes(q))}
+  if(estado.mat&&estado.mat!=="todos")l=l.filter(c=>c.m===estado.mat);
+  return `<div class="barra" style="justify-content:space-between"><div><h1>Casos</h1></div><button class="btn" id="nuevo">+ Nuevo caso</button></div>
+  <div class="barra"><input id="q" placeholder="Buscar por título, código, expediente o cliente" value="${esc(estado.q)}" style="flex:1 1 260px">
+  <select id="mat" aria-label="Materia"><option value="">Activos · todas las materias</option>${Object.entries(MAT).map(([k,v])=>`<option value="${k}" ${estado.mat===k?"selected":""}>${v}</option>`).join("")}<option value="todos" ${estado.mat==="todos"?"selected":""}>Incluir cerrados</option></select></div>
+  <div class="card scroll" style="padding:0"><table><thead><tr><th>Caso</th><th>Cliente</th><th>Materia</th><th>Estado</th><th>Equipo</th><th>Próximo plazo</th><th class="num">Por facturar</th></tr></thead><tbody>
+  ${l.map(c=>{const p=proxPlazo(c.c);return `<tr class="click" data-caso="${c.c}"><td><span class="mono">${c.c}</span> ${prio(c.p)}<div style="max-width:22rem">${esc(c.t)}</div><div class="small mono">Exp. ${c.exp}</div></td><td>${esc(c.cl)}</td><td>${MAT[c.m]}</td><td>${chipE(c.e)}<div class="small">${esc(c.et)}</div></td><td class="small">${c.ab.map(a=>a.split("|")[0]).join(", ")}</td><td>${p?chipDias(dias(p[3])):"—"}</td><td class="num">${usd(c.pf)}</td></tr>`}).join("")}
+  </tbody></table></div>`;
+}
+function vistaCaso(){
+  const c=caso(estado.caso);const tabs=[["resumen","Resumen"],["seguimiento","Seguimiento"],["plazos","Plazos"],["documentos","Documentos"],["jurisprudencia","Jurisprudencia"],["ia","Análisis IA"],["horas","Horas y gastos"],["facturas","Facturación"]];
+  let cuerpo="";
+  if(estado.tab==="resumen")cuerpo=`<div class="side"><section class="card"><h2>Datos del caso</h2><dl class="datos">
+   <div><dt>Tribunal</dt><dd>${esc(c.trib)}</dd></div><div><dt>Circunscripción</dt><dd>${esc(c.circ)}</dd></div>
+   <div><dt>Contraparte</dt><dd>${esc(c.cp)}</dd></div><div><dt>Cuantía</dt><dd>${c.cu?usd(c.cu):"—"}</dd></div>
+   <div><dt>Inicio</dt><dd>${fe(c.ini)}</dd></div><div><dt>Honorarios</dt><dd>${c.tar}</dd></div>
+   <div><dt>Horas registradas</dt><dd>${c.h}</dd></div><div><dt>Por facturar</dt><dd>${usd(c.pf)}</dd></div></dl>
+   <h2 style="margin-top:20px">Hechos</h2><p style="margin:0">${esc(c.d)}</p></section>
+   <section class="card"><h2>Equipo del caso</h2><ul class="lista">${c.ab.map(a=>{const[n,r]=a.split("|");return `<li><span>${n}</span><span class="chip ${r==="Responsable"?"c-gold":"c-neutral"}">${r}</span></li>`}).join("")}</ul>
+   <div class="barra" style="margin-top:12px"><select aria-label="Añadir abogado"><option>Añadir abogado…</option><option>Andreína Márquez</option><option>José Gregorio Salazar</option></select><button class="btn sec" onclick="toast('En la app real se añade al equipo y puede ver el caso')">Añadir</button></div>
+   <h2 style="margin-top:14px">Cliente</h2><div>${esc(c.cl)}</div><div class="small">📁 Carpeta de Google Drive vinculada</div></section></div>`;
+  if(estado.tab==="seguimiento")cuerpo=`<div class="side"><section class="card"><h2>Línea de tiempo del expediente</h2><ol class="tl">${D.act.filter(a=>a[0]===c.c).map(a=>`<li><div class="small">${fe(a[1])} · ${a[2]} · ${a[5]}</div><div style="font-weight:500">${esc(a[3])}</div>${a[4]?`<div class="small">${esc(a[4])}</div>`:""}</li>`).join("")||"<li>Sin actuaciones.</li>"}</ol></section>
+   <section class="card form"><h2>Registrar actuación</h2><select aria-label="Tipo"><option>Escrito</option><option>Audiencia</option><option>Auto</option><option>Sentencia</option></select><input placeholder="Título"><textarea rows="3" placeholder="Detalle"></textarea><button class="btn" onclick="toast('Actuación guardada (simulado)')">Guardar</button></section></div>`;
+  if(estado.tab==="plazos")cuerpo=`<div class="side"><section class="card scroll" style="padding:0"><table><thead><tr><th>Plazo</th><th>Vence</th><th>Responsable</th><th></th></tr></thead><tbody>${D.plazos.filter(p=>p[0]===c.c).map(p=>`<tr style="${p[4]?"opacity:.55":""}"><td><div style="font-weight:500">${esc(p[1])}</div><div class="small">${TP[p[2]]}${p[5]?" · "+esc(p[5]):""}</div></td><td>${fe(p[3])}<div>${p[4]?'<span class="chip c-ok">cumplido</span>':chipDias(dias(p[3]))}</div></td><td class="small">${p[6]}</td><td>${p[4]?"":'<button class="btn sec" onclick="toast(\'Plazo marcado como cumplido (simulado)\')">✓ Cumplido</button>'}</td></tr>`).join("")||'<tr><td colspan="4">Sin plazos.</td></tr>'}</tbody></table></section>
+   <section class="card form"><h2>Nuevo plazo o audiencia</h2><input placeholder="Ej.: Lapso de contestación"><select aria-label="Tipo"><option>Lapso procesal</option><option>Audiencia</option><option>Vencimiento de recurso</option></select><input type="date" aria-label="Fecha"><label class="small">Avisar por correo (días antes)</label><input value="7, 3, 1" aria-label="Días de aviso"><button class="btn" onclick="toast('Plazo creado; se avisará al equipo por correo')">Crear plazo</button></section></div>`;
+  if(estado.tab==="documentos")cuerpo=`<div class="side"><section class="card scroll" style="padding:0"><table><thead><tr><th>Documento</th><th>Tipo</th><th>Origen</th><th></th></tr></thead><tbody>${D.docs.filter(d=>d[0]===c.c).map(d=>`<tr><td style="font-weight:500">${esc(d[1])}</td><td>${d[2]}</td><td>${d[3]}</td><td><button class="btn sec" data-caso="${c.c}" data-tab="ia">✦ Analizar con IA</button></td></tr>`).join("")||'<tr><td colspan="4" class="small">Sin documentos. Vincúlalos desde la carpeta de Drive del cliente.</td></tr>'}</tbody></table></section>
+   <section class="card"><h2>Google Drive del cliente</h2><ul class="lista"><li><span>Poder notariado.pdf</span><button class="btn sec" onclick="toast('Archivo vinculado al caso (simulado)')">Vincular</button></li><li><span>Contrato marco 2025.pdf</span><button class="btn sec" onclick="toast('Archivo vinculado al caso (simulado)')">Vincular</button></li><li><span>Correspondencia contraparte.gdoc</span><button class="btn sec" onclick="toast('Archivo vinculado al caso (simulado)')">Vincular</button></li></ul><p class="small">Archivos ilustrativos: la app lista la carpeta real compartida por el cliente.</p></section></div>`;
+  if(estado.tab==="jurisprudencia"){const s=D.sent.filter(x=>x[4]===c.c);cuerpo=`<div class="grid">${s.map(x=>`<section class="card"><div class="small">${x[0]} · Sent. ${x[1]} · relevancia 4/5</div><div style="font-weight:600">${esc(x[2])}</div><p style="font-style:italic;margin:.4em 0 0">“${esc(x[3])}”</p></section>`).join("")||'<section class="card small">Sin sentencias vinculadas.</section>'}<div><button class="btn" onclick="estado.v='tsj';render()">🏛 Buscar en el TSJ para este caso</button></div></div>`}
+  if(estado.tab==="ia")cuerpo=`<div class="side" style="grid-template-columns:minmax(0,1fr) minmax(0,1.6fr)"><section class="card form"><h2>Asistente jurídico IA</h2><select id="tipoia" aria-label="Tipo de análisis"><option>Análisis integral del caso</option><option>Estrategia procesal y próximos pasos</option><option>Evaluación de riesgos y probabilidad</option><option>Analizar un documento</option><option>Informe para el cliente</option></select><textarea rows="4" placeholder="Pregunta específica (opcional). Ej.: ¿Procede la perención de la instancia?"></textarea><button class="btn" id="analizar">Analizar</button><p class="small" style="margin:0">Usa el expediente, el seguimiento, los plazos, los documentos y la jurisprudencia vinculada.</p></section>
+   <section id="resia" class="grid">${c.c==="LEX-2025-001"?`<article class="card ia"><div class="small">29 sep 2026 · Análisis integral · María Fernanda Rodríguez</div><div class="prosa">${IA_MUESTRA}</div></article>`:'<div class="card small">Aún no hay análisis para este caso. Pulsa Analizar.</div>'}</section></div>`;
+  if(estado.tab==="horas")cuerpo=`<div class="side"><section class="card"><h2>Resumen</h2><dl class="datos"><div><dt>Horas registradas</dt><dd>${c.h}</dd></div><div><dt>Pendiente por facturar</dt><dd>${usd(c.pf)}</dd></div></dl><p class="small">La app muestra cada registro por abogado, fecha y actividad, y los gastos reembolsables (aranceles, copias certificadas, traslados).</p></section>
+   <section class="card form"><h2>Registrar horas</h2><input type="date" value="2026-10-04" aria-label="Fecha"><input placeholder="Horas" inputmode="decimal"><input placeholder="Actividad realizada"><button class="btn" onclick="toast('Horas registradas (simulado)')">Registrar</button></section></div>`;
+  if(estado.tab==="facturas"){const fs=D.fact.filter(f=>f[2]===c.c);cuerpo=`<section class="card barra" style="justify-content:space-between"><div><div class="small">Horas y gastos pendientes por facturar</div><div style="font-family:var(--f-display);font-size:24px">${usd(c.pf)}</div></div><button class="btn" onclick="toast('Factura borrador generada con las horas y gastos pendientes (simulado)')">Generar factura borrador</button></section>
+   <section class="card scroll" style="padding:0;margin-top:14px"><table><thead><tr><th>Factura</th><th>Emisión</th><th>Estado</th><th class="num">Total</th><th class="num">Saldo</th></tr></thead><tbody>${fs.map(f=>`<tr class="click" data-fact="${f[0]}"><td class="mono">${f[0]}</td><td>${fe(f[3])}</td><td>${chipE(f[5])}</td><td class="num">${usd(f[9])}</td><td class="num">${usd(f[9]-f[10])}</td></tr>`).join("")||'<tr><td colspan="5" class="small">Sin facturas.</td></tr>'}</tbody></table></section>`}
+  return `<button class="link small" onclick="ir('casos')">← Casos</button>
+  <div class="cab" style="margin-top:6px"><span class="codigo">${c.c}</span>${chipE(c.e)}${prio(c.p)}<span class="chip c-gold">${MAT[c.m]}</span><button class="btn sec" style="margin-left:auto" onclick="toast('Abre el informe imprimible del caso (PDF) en la app real')">Informe del caso</button></div>
+  <h1>${esc(c.t)}</h1><p class="sub">${esc(c.cl)} · Exp. <span class="mono">${c.exp}</span> · ${esc(c.et)}</p>
+  <div class="tabs" role="tablist">${tabs.map(([k,t])=>`<button class="tab" role="tab" data-tab="${k}" aria-selected="${estado.tab===k}">${t}</button>`).join("")}</div>${cuerpo}`;
+}
+function clientes(){return `<h1>Clientes</h1><p class="sub">${D.clientes.length} clientes · cada uno puede vincular su carpeta de Google Drive</p>
+ <div class="card scroll" style="padding:0"><table><thead><tr><th>Cliente</th><th>Cédula / RIF</th><th>Contacto</th><th>Ciudad</th><th class="num">Casos</th><th>Drive</th></tr></thead><tbody>
+ ${D.clientes.map(c=>`<tr><td style="font-weight:500">${esc(c[0])}<div class="small">Persona ${c[1].toLowerCase()}</div></td><td class="mono">${c[2]}</td><td class="small">${c[3]}</td><td>${c[4]}</td><td class="num">${c[5]}</td><td>${c[6]?'<span class="chip c-ok">vinculada</span>':'<span class="chip c-neutral">sin carpeta</span>'}</td></tr>`).join("")}</tbody></table></div>`}
+function tsj(){return `<h1>Jurisprudencia del TSJ</h1><p class="sub">Busca en tsj.gob.ve con IA, importa sentencias por URL y vincúlalas a tus casos</p>
+ <div class="side" style="grid-template-columns:minmax(0,1fr) minmax(0,1.5fr)">
+  <section class="card form"><h2>Buscar en el TSJ con IA</h2><textarea id="qtsj" rows="3">perención breve de la instancia por falta de impulso de la citación</textarea><select aria-label="Sala"><option>Todas las salas</option><option>Sala Constitucional</option><option>Sala de Casación Civil</option><option>Sala de Casación Social</option><option>Sala Político-Administrativa</option></select><button class="btn" id="btsj">Buscar</button>
+  <div id="restsj" class="small">La búsqueda solo muestra sentencias con enlace verificable a tsj.gob.ve.</div>
+  <h2 style="margin-top:8px">Importar por URL</h2><input placeholder="http://historico.tsj.gob.ve/decisiones/scon/…" aria-label="URL de la sentencia"><button class="btn sec" onclick="toast('En la app real descarga la sentencia y la IA extrae sala, número, ponente, resumen y doctrina')">Importar</button></section>
+  <section class="grid"><h2 style="margin:0">Mi jurisprudencia (${D.sent.length})</h2>${D.sent.map(s=>`<article class="card"><div class="small">${s[0]} · ${s[1]} <span class="chip c-warn">ejemplo</span>${s[4]?` · vinculada a <button class="link mono" data-caso="${s[4]}" data-tab="jurisprudencia">${s[4]}</button>`:""}</div><div style="font-weight:600">${esc(s[2])}</div><p style="margin:.3em 0 0;font-style:italic">${esc(s[3])}</p></article>`).join("")}</section>
+ </div>`}
+function facturacion(){
+ const vig=D.fact.filter(f=>f[5]!=="borrador");const cobrar=vig.reduce((s,f)=>s+f[9]-f[10],0);const venc=vig.filter(f=>f[5]==="vencida").reduce((s,f)=>s+f[9]-f[10],0);
+ return `<h1>Facturación</h1><p class="sub">IVA 16 %, IGTF 3 % por pago en divisas y equivalente en bolívares a tasa BCV</p>
+ <div class="grid kpis"><div class="kpi"><div class="t">Por cobrar</div><div class="v">${usd(cobrar).replace("USD ","$")}</div></div><div class="kpi"><div class="t">Vencido</div><div class="v">${usd(venc).replace("USD ","$")}</div></div><div class="kpi"><div class="t">Cobrado</div><div class="v">${usd(vig.reduce((s,f)=>s+f[10],0)).replace("USD ","$")}</div></div><div class="kpi"><div class="t">Facturas</div><div class="v">${D.fact.length}</div><div class="d">1 en borrador</div></div></div>
+ <div class="card scroll" style="padding:0"><table><thead><tr><th>Factura</th><th>Cliente</th><th>Caso</th><th>Emisión</th><th>Vence</th><th>Estado</th><th class="num">Total</th><th class="num">Saldo</th></tr></thead><tbody>
+ ${D.fact.map(f=>`<tr class="click" data-fact="${f[0]}"><td class="mono">${f[0]}</td><td>${esc(f[1])}</td><td class="mono small">${f[2]}</td><td>${fe(f[3])}</td><td>${fe(f[4])}</td><td>${chipE(f[5])}</td><td class="num">${usd(f[9])}</td><td class="num" style="font-weight:600">${usd(f[9]-f[10])}</td></tr>`).join("")}</tbody></table></div>`}
+function factura(){
+ const f=D.fact.find(x=>x[0]===estado.fact);const cl=D.clientes.find(c=>c[0]===f[1]);
+ return `<button class="link small" onclick="ir('facturacion')">← Facturación</button>
+ <article class="card factura" style="margin-top:10px"><header><div><div style="font-family:var(--f-display);font-size:19px">Rodríguez, Pérez &amp; Asociados</div><div class="small">RIF J-40123456-7 · Av. Francisco de Miranda, Chacao, Caracas</div></div><div style="text-align:right"><div style="font-family:var(--f-display);font-size:20px">FACTURA</div><div class="mono">N.º ${f[0]}</div><div class="small">N.º de control 00-${f[0].slice(2)}</div>${chipE(f[5])}</div></header>
+ <div class="barra" style="justify-content:space-between;align-items:flex-start"><div><div class="small">Cliente</div><div style="font-weight:600">${esc(f[1])}</div><div class="mono small">${cl?cl[2]:""}</div></div><div style="text-align:right" class="small">Emisión ${fe(f[3])}<br>Vence ${fe(f[4])}<br>Caso <span class="mono">${f[2]}</span><br>Tasa BCV ${bs(f[11])} / USD</div></div>
+ <div class="scroll"><table><thead><tr><th>Descripción</th><th class="num">Cant.</th><th class="num">Precio</th><th class="num">Total</th></tr></thead><tbody>${f[12].map(i=>`<tr><td>${esc(i[0])}</td><td class="num">${i[1]}</td><td class="num">${usd(i[2])}</td><td class="num">${usd(i[1]*i[2])}</td></tr>`).join("")}</tbody></table></div>
+ <div class="tot"><div><span>Base imponible</span><span>${usd(f[6])}</span></div><div><span>IVA 16 %</span><span>${usd(f[7])}</span></div>${f[8]?`<div><span>IGTF 3 %</span><span>${usd(f[8])}</span></div>`:""}<div class="g"><span>Total</span><span>${usd(f[9])}</span></div><div class="small"><span>Equivalente</span><span>${bs(f[9]*f[11])}</span></div><div style="color:var(--ok)"><span>Pagado</span><span>${usd(f[10])}</span></div><div style="font-weight:600"><span>Saldo</span><span>${usd(f[9]-f[10])}</span></div></div>
+ <div class="barra" style="margin-top:16px">${f[5]==="borrador"?'<button class="btn" onclick="toast(\'Factura emitida (simulado)\')">Emitir factura</button>':""}${["emitida","vencida","parcial"].includes(f[5])?'<button class="btn" onclick="toast(\'Pago registrado: pago móvil, Zelle, transferencia… (simulado)\')">Registrar pago</button>':""}</div></article>`}
+function informes(){
+ const max=Math.max(...D.horas.map(h=>h[4]));const cnt=k=>{const m={};D.casos.forEach(c=>m[c[k]]=(m[c[k]]||0)+1);return Object.entries(m).sort((a,b)=>b[1]-a[1])};
+ const cart={};D.fact.filter(f=>f[5]!=="borrador").forEach(f=>{const c=cart[f[1]]||(cart[f[1]]=[0,0]);c[0]+=f[9];c[1]+=f[9]-f[10]});
+ const bloque=(t,arr,lab)=>{const mx=Math.max(...arr.map(a=>a[1]));return `<section class="card"><h2>${t}</h2>${arr.map(([k,n])=>`<div class="fila3"><span>${lab(k)}</span><div class="meter"><span style="width:${n/mx*100}%"></span></div><span class="num">${n}</span></div>`).join("")}</section>`};
+ return `<div class="barra" style="justify-content:space-between"><h1>Informes</h1><div class="barra" style="margin:0"><button class="btn sec" onclick="toast('Descarga CSV en la app real')">⤓ Casos</button><button class="btn sec" onclick="toast('Descarga CSV en la app real')">⤓ Horas</button><button class="btn sec" onclick="toast('Descarga CSV en la app real')">⤓ Facturas</button></div></div><p class="sub">Últimos 75 días</p>
+ <section class="card scroll" style="margin-bottom:16px"><h2>Productividad por abogado</h2><table><thead><tr><th>Abogado</th><th class="num">Horas</th><th class="num">Facturables</th><th class="num">Utilización</th><th class="num">Valor</th><th style="width:28%"></th></tr></thead><tbody>${D.horas.map(h=>`<tr><td>${h[0]} <span class="small">${h[1]}</span></td><td class="num">${h[2]}</td><td class="num">${h[3]}</td><td class="num">${Math.round(h[3]/h[2]*100)} %</td><td class="num">${usd(h[4])}</td><td><div class="meter"><span style="width:${h[4]/max*100}%"></span></div></td></tr>`).join("")}</tbody></table></section>
+ <div class="grid two">${bloque("Casos por materia",cnt("m"),k=>MAT[k])}${bloque("Casos por estado",cnt("e"),k=>EST[k][0])}</div>
+ <section class="card scroll" style="margin-top:16px"><h2>Cartera por cliente</h2><table><thead><tr><th>Cliente</th><th class="num">Facturado</th><th class="num">Saldo</th></tr></thead><tbody>${Object.entries(cart).sort((a,b)=>b[1][1]-a[1][1]).map(([k,v])=>`<tr><td>${esc(k)}</td><td class="num">${usd(v[0])}</td><td class="num" style="${v[1]>0?"color:var(--bad);font-weight:600":""}">${usd(v[1])}</td></tr>`).join("")}</tbody></table></section>`}
+function alertas(){
+ const prox=D.plazos.filter(p=>!p[4]&&dias(p[3])<=30);
+ const correos=prox.filter(p=>dias(p[3])<=3).map(p=>[`[LexVE] ${p[0]}: ${p[1]} — ${dias(p[3])===0?"vence HOY":"vence en "+dias(p[3])+" día(s)"}`,p[6]]);
+ return `<div class="barra" style="justify-content:space-between"><h1>Alertas y vencimientos</h1><button class="btn" onclick="toast('Alertas generadas en modo simulación: no se envió ningún correo')">Generar y enviar alertas ahora</button></div>
+ <p class="aviso" style="margin-top:4px">Modo simulación: las alertas se registran pero no se envían. El aviso automático corre cada mañana según los días configurados en cada plazo (7, 3 y 1 días antes, y al vencer).</p>
+ <div class="grid two"><section class="card"><h2>Próximos 30 días</h2><ul class="lista">${prox.map(p=>`<li><div><button class="link" data-caso="${p[0]}" data-tab="plazos">${esc(p[1])}</button><div class="small"><span class="mono">${p[0]}</span> · ${TP[p[2]]} · ${fe(p[3])} · ${p[6]}</div></div>${chipDias(dias(p[3]))}</li>`).join("")}</ul></section>
+ <section class="card"><h2>Correos que se generarían hoy</h2><ul class="lista">${correos.map(c=>`<li><div><div style="font-weight:500">${esc(c[0])}</div><div class="small">Para ${c[1]} y el equipo del caso · simulado</div></div></li>`).join("")}</ul></section></div>`}
+
+function render(){
+ navegar();const v=estado.v;
+ $("#vista").innerHTML=v==="panel"?panel():v==="casos"?casos():v==="caso"?vistaCaso():v==="clientes"?clientes():v==="tsj"?tsj():v==="facturacion"?facturacion():v==="factura"?factura():v==="informes"?informes():alertas();
+ $("#vista").classList.remove("vista");void $("#vista").offsetWidth;$("#vista").classList.add("vista");
+ const q=$("#q");if(q){q.addEventListener("input",e=>{estado.q=e.target.value;const pos=e.target.selectionStart;render();const n=$("#q");n.focus();n.setSelectionRange(pos,pos)});$("#mat").addEventListener("change",e=>{estado.mat=e.target.value;render()});$("#nuevo").addEventListener("click",()=>toast("Formulario de nuevo caso en la app real"))}
+ const a=$("#analizar");if(a)a.addEventListener("click",()=>{a.textContent="Analizando…";setTimeout(()=>{a.textContent="Analizar";const c=caso(estado.caso);$("#resia").insertAdjacentHTML("afterbegin",`<article class="card ia"><div class="small">Ahora · ${esc($("#tipoia").value)} · simulación</div><div class="prosa"><p><strong>Situación:</strong> ${esc(c.d)}</p><p><strong>Etapa:</strong> ${esc(c.et)} ante ${esc(c.trib)}.</p><p><strong>Siguiente paso sugerido:</strong> revisar el próximo plazo${proxPlazo(c.c)?` (“${esc(proxPlazo(c.c)[1])}”, ${fe(proxPlazo(c.c)[3])})`:""} y preparar el escrito correspondiente.</p><p class="small">En la app real, Claude redacta aquí un análisis completo con normas aplicables, riesgos y estrategia.</p></div></article>`)},1100)});
+ const b=$("#btsj");if(b)b.addEventListener("click",()=>{b.textContent="Buscando…";setTimeout(()=>{b.textContent="Buscar";$("#restsj").innerHTML=`<div class="card" style="padding:12px;margin-top:6px">En la app real, Claude busca en tsj.gob.ve y devuelve cada sentencia con sala, número, fecha, ponente, resumen y enlace, lista para guardar y vincular al caso. El prototipo no se conecta al TSJ.</div>`},900)});
+}
+render();
+</script>
+
+</body></html>

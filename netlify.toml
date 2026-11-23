@@ -1,0 +1,13 @@
+# Despliegue de LexVE en Netlify.
+# Netlify detecta Next.js y usa su adaptador oficial (OpenNext) automáticamente.
+
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"

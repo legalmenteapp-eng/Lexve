@@ -30,7 +30,7 @@ export default async function Alertas() {
         {ENVIO_REAL
           ? "Envío real activado: los correos se envían a los abogados de cada caso."
           : "Modo simulación: las alertas se generan y registran, pero NO se envían correos. Activa ALERTAS_ENVIO_REAL=true y RESEND_API_KEY para enviarlas."}{" "}
-        El aviso automático corre a diario (Vercel Cron) según los días configurados en cada plazo.
+        El aviso automático corre a diario a las 7:00 a. m. (hora de Caracas) según los días configurados en cada plazo.
       </p>
       <div className="grid gap-6 lg:grid-cols-2">
         <section className="tarjeta">

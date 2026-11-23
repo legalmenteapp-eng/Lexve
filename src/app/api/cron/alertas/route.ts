@@ -4,7 +4,7 @@ import { procesarAlertas } from "@/lib/alertas";
 
 export const maxDuration = 120;
 
-/** Ejecutado a diario por Vercel Cron (ver vercel.json). Protegido con CRON_SECRET. */
+/** Ejecución manual o desde Vercel Cron (vercel.json). En Netlify corre netlify/functions/alertas-diarias.mts. Protegido con CRON_SECRET. */
 export async function GET(req: Request) {
   const secreto = process.env.CRON_SECRET;
   if (!secreto || req.headers.get("authorization") !== `Bearer ${secreto}`) {
